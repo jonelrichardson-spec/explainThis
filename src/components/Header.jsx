@@ -46,4 +46,4 @@ function Header({ darkMode, toggleDarkMode, onAboutClick }) {
   );
 }
 
-export default Header;
+export default Header; 
