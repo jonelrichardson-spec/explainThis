@@ -10,6 +10,8 @@ import Toast from './components/Toast';
 import { useGemini } from './hooks/useGemini';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import LibraryCard from './components/LibraryCard';
+import EmptyState from './components/EmptyState';
 
 // Test function to find working model
 async function testModels() {
@@ -104,7 +106,18 @@ function App() {
       setToast({ message: 'Already saved to library!', type: 'info' });
       return;
     }
+const handleDeleteFromLibrary = (id) => {
+  if (confirm('Are you sure you want to delete this from your library?')) {
+    setLibrary(library.filter(item => item.id !== id));
+    setToast({ message: '🗑️ Deleted from library', type: 'info' });
+  }
+};
 
+const handleViewFromLibrary = (explanation) => {
+  setCurrentExplanation(explanation);
+  setActiveTab('home');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
     // Add to library
   const updatedExplanation = { ...currentExplanation, saved: true };
   setLibrary([updatedExplanation, ...library]); // Add to beginning
@@ -178,16 +191,37 @@ return (
           </div>
         )}
         
-        {activeTab === 'library' && (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              📚 Library Page
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Saved concepts will go here
-            </p>
-          </div>
-        )}
+      {activeTab === 'library' && (
+  <div>
+    <div className="mb-6">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        📚 My Library
+      </h1>
+      <p className="text-gray-600 dark:text-gray-400">
+        {library.length} saved {library.length === 1 ? 'concept' : 'concepts'}
+      </p>
+    </div>
+
+    {library.length === 0 ? (
+      <EmptyState
+        icon="📚"
+        title="No saved concepts yet"
+        description="Save explanations to your library to review them later. Click the Save button on any explanation to add it here."
+      />
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {library.map((explanation) => (
+          <LibraryCard
+            key={explanation.id}
+            explanation={explanation}
+            onView={() => handleViewFromLibrary(explanation)}
+            onDelete={() => handleDeleteFromLibrary(explanation.id)}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+)}
         
         {activeTab === 'progress' && (
           <div className="text-center py-12">
