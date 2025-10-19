@@ -5,6 +5,7 @@ import TextInput from './components/TextInput';
 import LevelSelector from './components/LevelSelector';
 import ExplainButton from './components/ExplainButton';
 import LoadingState from './components/LoadingState';
+import ExplanationCard from './components/ExplanationCard';
 import { useGemini } from './hooks/useGemini';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -117,22 +118,22 @@ function App() {
                 onSelectLevel={setSelectedLevel}
               />
               
-             <ExplainButton
-  onClick={handleExplain}
-  disabled={isInputEmpty || isOverLimit}
-  isLoading={isLoading}
-/>
+              <ExplainButton
+                onClick={handleExplain}
+                disabled={isInputEmpty || isOverLimit}
+                isLoading={isLoading}
+              />
 
-{/* Add this test button */}
-<button
-  onClick={async () => {
-    const workingModel = await testModels();
-    alert(`Working model: ${workingModel || 'None found'}`);
-  }}
-  className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
->
-  🔍 Test Which Model Works
-</button>
+              {/* Test button - can remove later */}
+              <button
+                onClick={async () => {
+                  const workingModel = await testModels();
+                  alert(`Working model: ${workingModel || 'None found'}`);
+                }}
+                className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+              >
+                🔍 Test Which Model Works
+              </button>
 
               {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -145,69 +146,14 @@ function App() {
               {isLoading && <LoadingState />}
 
               {currentExplanation && !isLoading && (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-8 space-y-4">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    💡 {currentExplanation.concept}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {currentExplanation.level} level
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        📖 SIMPLE EXPLANATION
-                      </h3>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {currentExplanation.explanation.simple}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        🔄 ANALOGY
-                      </h3>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {currentExplanation.explanation.analogy}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        📝 REAL-WORLD EXAMPLE
-                      </h3>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {currentExplanation.explanation.example}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        🎯 WHY THIS MATTERS
-                      </h3>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {currentExplanation.explanation.whyItMatters}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        🔗 RELATED CONCEPTS
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {currentExplanation.explanation.relatedConcepts.map((concept, idx) => (
-                          <span 
-                            key={idx}
-                            className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 
-                                     text-purple-700 dark:text-purple-300 rounded-full text-sm"
-                          >
-                            {concept}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ExplanationCard
+                  explanation={currentExplanation}
+                  onSave={() => alert('Save functionality - coming next!')}
+                  onRelatedClick={(concept) => {
+                    setInputText(concept);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               )}
             </div>
           )}
