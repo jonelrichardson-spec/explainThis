@@ -207,4 +207,5 @@ function Section({ icon, title, content, bgGray }) {
   );
 }
 
+
 export default ExplanationCard;

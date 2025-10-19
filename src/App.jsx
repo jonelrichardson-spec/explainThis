@@ -6,7 +6,9 @@ import LevelSelector from './components/LevelSelector';
 import ExplainButton from './components/ExplainButton';
 import LoadingState from './components/LoadingState';
 import ExplanationCard from './components/ExplanationCard';
+import Toast from './components/Toast';
 import { useGemini } from './hooks/useGemini';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Test function to find working model
@@ -48,6 +50,8 @@ function App() {
   const [inputText, setInputText] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('elementary');
   const [currentExplanation, setCurrentExplanation] = useState(null);
+  const [library, setLibrary] = useLocalStorage('explainThis_library', []);
+  const [toast, setToast] = useState(null);
 
   const { explainConcept, isLoading, error } = useGemini();
 
@@ -92,99 +96,124 @@ function App() {
     }
   };
 
-  const isInputEmpty = !inputText.trim();
-  const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
-  const isOverLimit = wordCount > 2000;
+  const handleSave = () => {
+    // Check if already saved
+    const alreadySaved = library.some(item => item.id === currentExplanation.id);
+    
+    if (alreadySaved) {
+      setToast({ message: 'Already saved to library!', type: 'info' });
+      return;
+    }
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <Header 
-        darkMode={darkMode} 
-        toggleDarkMode={toggleDarkMode}
-        onAboutClick={handleAboutClick}
-      />
-      
-      <main className="pb-20 px-4 py-6">
-        <div className="max-w-4xl mx-auto">
-          {activeTab === 'home' && (
-            <div className="space-y-6">
-              <TextInput 
-                value={inputText}
-                onChange={setInputText}
-              />
-              
-              <LevelSelector
-                selectedLevel={selectedLevel}
-                onSelectLevel={setSelectedLevel}
-              />
-              
-              <ExplainButton
-                onClick={handleExplain}
-                disabled={isInputEmpty || isOverLimit}
-                isLoading={isLoading}
-              />
+    // Add to library
+  const updatedExplanation = { ...currentExplanation, saved: true };
+  setLibrary([updatedExplanation, ...library]); // Add to beginning
+  setCurrentExplanation(updatedExplanation);
+  setToast({ message: '✅ Saved to Library!', type: 'success' });
+};
 
-              {/* Test button - can remove later */}
-              <button
-                onClick={async () => {
-                  const workingModel = await testModels();
-                  alert(`Working model: ${workingModel || 'None found'}`);
+const isInputEmpty = !inputText.trim();
+const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
+const isOverLimit = wordCount > 2000;
+
+return (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <Header 
+      darkMode={darkMode} 
+      toggleDarkMode={toggleDarkMode}
+      onAboutClick={handleAboutClick}
+    />
+    
+    <main className="pb-20 px-4 py-6">
+      <div className="max-w-4xl mx-auto">
+        {activeTab === 'home' && (
+          <div className="space-y-6">
+            <TextInput 
+              value={inputText}
+              onChange={setInputText}
+            />
+            
+            <LevelSelector
+              selectedLevel={selectedLevel}
+              onSelectLevel={setSelectedLevel}
+            />
+            
+            <ExplainButton
+              onClick={handleExplain}
+              disabled={isInputEmpty || isOverLimit}
+              isLoading={isLoading}
+            />
+
+            {/* Test button - can remove later */}
+            <button
+              onClick={async () => {
+                const workingModel = await testModels();
+                alert(`Working model: ${workingModel || 'None found'}`);
+              }}
+              className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+            >
+              🔍 Test Which Model Works
+            </button>
+
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <p className="text-red-800 dark:text-red-200">
+                  ❌ Error: {error}
+                </p>
+              </div>
+            )}
+
+            {isLoading && <LoadingState />}
+
+            {currentExplanation && !isLoading && (
+              <ExplanationCard
+                explanation={currentExplanation}
+                onSave={handleSave}
+                onRelatedClick={(concept) => {
+                  setInputText(concept);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
-              >
-                🔍 Test Which Model Works
-              </button>
+              />
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'library' && (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              📚 Library Page
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Saved concepts will go here
+            </p>
+          </div>
+        )}
+        
+        {activeTab === 'progress' && (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              📊 Progress Page
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Learning stats will go here
+            </p>
+          </div>
+        )}
+      </div>
+    </main>
 
-              {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <p className="text-red-800 dark:text-red-200">
-                    ❌ Error: {error}
-                  </p>
-                </div>
-              )}
-
-              {isLoading && <LoadingState />}
-
-              {currentExplanation && !isLoading && (
-                <ExplanationCard
-                  explanation={currentExplanation}
-                  onSave={() => alert('Save functionality - coming next!')}
-                  onRelatedClick={(concept) => {
-                    setInputText(concept);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'library' && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                📚 Library Page
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Saved concepts will go here
-              </p>
-            </div>
-          )}
-          
-          {activeTab === 'progress' && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                📊 Progress Page
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Learning stats will go here
-              </p>
-            </div>
-          )}
-        </div>
-      </main>
-  
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-    </div>
-  );
+    <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+    
+    {/* Toast notifications */}
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(null)}
+      />
+    )}
+  </div>
+);
 }
 
 export default App;
