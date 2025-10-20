@@ -1,59 +1,60 @@
 import { BookOpen, RefreshCw, FileText, Target, Link2, Save, Copy } from 'lucide-react';
 
-const LEVEL_COLORS = {
+const LEVEL_STYLES = {
   beginner: {
-    primary: 'purple-600',
-    light: 'purple-500',
-    bg: 'purple-50',
-    darkBg: 'purple-900/20',
-    border: 'purple-200',
-    darkBorder: 'purple-800'
+    borderColor: '#9333ea',
+    bgColor: '#f3e8ff',
+    darkBgColor: 'rgba(147, 51, 234, 0.2)',
+    textColor: '#9333ea',
+    lightTextColor: '#a855f7',
+    buttonBg: '#f3e8ff',
+    buttonHoverBg: '#9333ea',
+    emoji: '🌱'
   },
   elementary: {
-    primary: 'blue-600',
-    light: 'blue-500',
-    bg: 'blue-50',
-    darkBg: 'blue-900/20',
-    border: 'blue-200',
-    darkBorder: 'blue-800'
+    borderColor: '#2563eb',
+    bgColor: '#dbeafe',
+    darkBgColor: 'rgba(37, 99, 235, 0.2)',
+    textColor: '#2563eb',
+    lightTextColor: '#3b82f6',
+    buttonBg: '#dbeafe',
+    buttonHoverBg: '#2563eb',
+    emoji: '📚'
   },
   intermediate: {
-    primary: 'green-600',
-    light: 'green-500',
-    bg: 'green-50',
-    darkBg: 'green-900/20',
-    border: 'green-200',
-    darkBorder: 'green-800'
+    borderColor: '#059669',
+    bgColor: '#d1fae5',
+    darkBgColor: 'rgba(5, 150, 105, 0.2)',
+    textColor: '#059669',
+    lightTextColor: '#10b981',
+    buttonBg: '#d1fae5',
+    buttonHoverBg: '#059669',
+    emoji: '🎓'
   },
-  advanced: {
-    primary: 'amber-600',
-    light: 'amber-500',
-    bg: 'amber-50',
-    darkBg: 'amber-900/20',
-    border: 'amber-200',
-    darkBorder: 'amber-800'
-  },
-  expert: {
-    primary: 'orange-600',
-    light: 'orange-500',
-    bg: 'orange-50',
-    darkBg: 'orange-900/20',
-    border: 'orange-200',
-    darkBorder: 'orange-800'
-  }
-};
-
-const LEVEL_EMOJIS = {
-  beginner: '🌱',
-  elementary: '📚',
-  intermediate: '🎓',
-  advanced: '🎯',
-  expert: '🔬'
+advanced: {
+  borderColor: '#db2777',      // pink-600
+  bgColor: '#fce7f3',          // pink-100
+  darkBgColor: 'rgba(219, 39, 119, 0.2)',
+  textColor: '#db2777',        // pink-600
+  lightTextColor: '#ec4899',   // pink-500
+  buttonBg: '#fce7f3',
+  buttonHoverBg: '#db2777',
+  emoji: '🎯'
+},
+expert: {
+  borderColor: '#f59e0b',      // amber-500
+  bgColor: '#fef3c7',          // amber-100
+  darkBgColor: 'rgba(245, 158, 11, 0.2)',
+  textColor: '#f59e0b',        // amber-500
+  lightTextColor: '#fbbf24',   // amber-400
+  buttonBg: '#fef3c7',
+  buttonHoverBg: '#f59e0b',
+  emoji: '🔬'
+}
 };
 
 function ExplanationCard({ explanation, onSave, onRelatedClick }) {
-  const colors = LEVEL_COLORS[explanation.level];
-  const emoji = LEVEL_EMOJIS[explanation.level];
+  const styles = LEVEL_STYLES[explanation.level];
 
   const handleCopy = () => {
     const text = `
@@ -86,16 +87,24 @@ ${explanation.explanation.relatedConcepts.join(', ')}
                     overflow-hidden animate-fadeInUp">
       
       {/* Level Header */}
-      <div className={`px-6 py-4 border-b-2 border-${colors.primary} 
-                      bg-${colors.bg} dark:bg-${colors.darkBg}`}>
+      <div 
+        className="px-6 py-4 border-b-2"
+        style={{
+          borderColor: styles.borderColor,
+          backgroundColor: styles.bgColor
+        }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{emoji}</span>
+            <span className="text-2xl">{styles.emoji}</span>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {explanation.concept}
               </h2>
-              <p className={`text-sm font-semibold text-${colors.primary} dark:text-${colors.light} capitalize`}>
+              <p 
+                className="text-sm font-semibold capitalize"
+                style={{ color: styles.textColor }}
+              >
                 {explanation.level} Level
               </p>
             </div>
@@ -115,9 +124,9 @@ ${explanation.explanation.relatedConcepts.join(', ')}
             
             <button
               onClick={onSave}
-              className={`px-4 py-2 rounded-lg bg-${colors.primary} 
-                       hover:bg-${colors.light} text-white font-semibold
-                       transition-colors duration-200 flex items-center gap-2`}
+              className="px-4 py-2 rounded-lg text-white font-semibold
+                       transition-all duration-200 flex items-center gap-2 hover:opacity-90"
+              style={{ backgroundColor: styles.buttonHoverBg }}
             >
               <Save className="w-4 h-4" />
               Save
@@ -131,14 +140,14 @@ ${explanation.explanation.relatedConcepts.join(', ')}
         
         {/* Simple Explanation */}
         <Section
-          icon={<BookOpen className={`w-5 h-5 text-${colors.primary}`} />}
+          icon={<BookOpen className="w-5 h-5" style={{ color: styles.textColor }} />}
           title="SIMPLE EXPLANATION"
           content={explanation.explanation.simple}
         />
 
         {/* Analogy */}
         <Section
-          icon={<RefreshCw className={`w-5 h-5 text-${colors.primary}`} />}
+          icon={<RefreshCw className="w-5 h-5" style={{ color: styles.textColor }} />}
           title="ANALOGY"
           content={explanation.explanation.analogy}
           bgGray
@@ -146,14 +155,14 @@ ${explanation.explanation.relatedConcepts.join(', ')}
 
         {/* Real-World Example */}
         <Section
-          icon={<FileText className={`w-5 h-5 text-${colors.primary}`} />}
+          icon={<FileText className="w-5 h-5" style={{ color: styles.textColor }} />}
           title="REAL-WORLD EXAMPLE"
           content={explanation.explanation.example}
         />
 
         {/* Why This Matters */}
         <Section
-          icon={<Target className={`w-5 h-5 text-${colors.primary}`} />}
+          icon={<Target className="w-5 h-5" style={{ color: styles.textColor }} />}
           title="WHY THIS MATTERS"
           content={explanation.explanation.whyItMatters}
           bgGray
@@ -162,7 +171,7 @@ ${explanation.explanation.relatedConcepts.join(', ')}
         {/* Related Concepts */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Link2 className={`w-5 h-5 text-${colors.primary}`} />
+            <Link2 className="w-5 h-5" style={{ color: styles.textColor }} />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Related Concepts
             </h3>
@@ -172,12 +181,20 @@ ${explanation.explanation.relatedConcepts.join(', ')}
               <button
                 key={idx}
                 onClick={() => onRelatedClick(concept)}
-                className={`px-4 py-2 bg-${colors.bg} dark:bg-${colors.darkBg}
-                         text-${colors.primary} dark:text-${colors.light}
-                         rounded-full text-sm font-medium
-                         hover:bg-${colors.primary} hover:text-white
-                         dark:hover:bg-${colors.light} dark:hover:text-gray-900
-                         transition-all duration-200 hover:scale-105`}
+                className="px-4 py-2 rounded-full text-sm font-medium
+                         transition-all duration-200 hover:scale-105 hover:text-white"
+                style={{
+                  backgroundColor: styles.buttonBg,
+                  color: styles.textColor
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = styles.buttonHoverBg;
+                  e.target.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = styles.buttonBg;
+                  e.target.style.color = styles.textColor;
+                }}
               >
                 {concept}
               </button>
@@ -206,6 +223,5 @@ function Section({ icon, title, content, bgGray }) {
     </div>
   );
 }
-
 
 export default ExplanationCard;

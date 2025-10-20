@@ -12,6 +12,26 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import LibraryCard from './components/LibraryCard';
 import EmptyState from './components/EmptyState';
+import ProgressPage from './components/ProgressPage';
+import AboutModal from './components/AboutModal';
+
+// Function to normalize library data
+function normalizeLibraryData() {
+  const library = localStorage.getItem('explainThis_library');
+  if (!library) return;
+  
+  try {
+    const data = JSON.parse(library);
+    const normalized = data.map(item => ({
+      ...item,
+      level: item.level.toLowerCase()
+    }));
+    localStorage.setItem('explainThis_library', JSON.stringify(normalized));
+    console.log('✅ Library data normalized!');
+  } catch (err) {
+    console.error('Failed to normalize library:', err);
+  }
+}
 
 // Test function to find working model
 async function testModels() {
@@ -54,12 +74,18 @@ function App() {
   const [currentExplanation, setCurrentExplanation] = useState(null);
   const [library, setLibrary] = useLocalStorage('explainThis_library', []);
   const [toast, setToast] = useState(null);
-
+  const [showAboutModal, setShowAboutModal] = useState(false);
+const [librarySearch, setLibrarySearch] = useState('');
   const { explainConcept, isLoading, error } = useGemini();
-
+const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z, z-a
   // Test models on page load
   useEffect(() => {
     testModels();
+  }, []);
+
+  // Run once on app load to fix data
+  useEffect(() => {
+    normalizeLibraryData();
   }, []);
 
   useEffect(() => {
@@ -86,7 +112,8 @@ function App() {
   };
 
   const handleAboutClick = () => {
-    alert('About modal - to be implemented!');
+    console.log('About clicked! Opening modal...');
+    setShowAboutModal(true);
   };
 
   const handleExplain = async () => {
@@ -106,100 +133,141 @@ function App() {
       setToast({ message: 'Already saved to library!', type: 'info' });
       return;
     }
-const handleDeleteFromLibrary = (id) => {
-  if (confirm('Are you sure you want to delete this from your library?')) {
-    setLibrary(library.filter(item => item.id !== id));
-    setToast({ message: '🗑️ Deleted from library', type: 'info' });
-  }
-};
 
-const handleViewFromLibrary = (explanation) => {
-  setCurrentExplanation(explanation);
-  setActiveTab('home');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
     // Add to library
-  const updatedExplanation = { ...currentExplanation, saved: true };
-  setLibrary([updatedExplanation, ...library]); // Add to beginning
-  setCurrentExplanation(updatedExplanation);
-  setToast({ message: '✅ Saved to Library!', type: 'success' });
-};
+    const updatedExplanation = { ...currentExplanation, saved: true };
+    setLibrary([updatedExplanation, ...library]);
+    setCurrentExplanation(updatedExplanation);
+    setToast({ message: '✅ Saved to Library!', type: 'success' });
+  };
 
-const isInputEmpty = !inputText.trim();
-const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
-const isOverLimit = wordCount > 2000;
+  const handleDeleteFromLibrary = (id) => {
+    if (confirm('Are you sure you want to delete this from your library?')) {
+      setLibrary(library.filter(item => item.id !== id));
+      setToast({ message: '🗑️ Deleted from library', type: 'info' });
+    }
+  };
 
-return (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-    <Header 
-      darkMode={darkMode} 
-      toggleDarkMode={toggleDarkMode}
-      onAboutClick={handleAboutClick}
-    />
-    
-    <main className="pb-20 px-4 py-6">
-      <div className="max-w-4xl mx-auto">
-        {activeTab === 'home' && (
-          <div className="space-y-6">
-            <TextInput 
-              value={inputText}
-              onChange={setInputText}
-            />
-            
-            <LevelSelector
-              selectedLevel={selectedLevel}
-              onSelectLevel={setSelectedLevel}
-            />
-            
-            <ExplainButton
-              onClick={handleExplain}
-              disabled={isInputEmpty || isOverLimit}
-              isLoading={isLoading}
-            />
+  const handleViewFromLibrary = (explanation) => {
+    setCurrentExplanation(explanation);
+    setActiveTab('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-            {/* Test button - can remove later */}
-            <button
-              onClick={async () => {
-                const workingModel = await testModels();
-                alert(`Working model: ${workingModel || 'None found'}`);
-              }}
-              className="w-full py-3 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
-            >
-              🔍 Test Which Model Works
-            </button>
+  const isInputEmpty = !inputText.trim();
+  const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
+  const isOverLimit = wordCount > 2000;
 
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <p className="text-red-800 dark:text-red-200">
-                  ❌ Error: {error}
-                </p>
-              </div>
-            )}
-
-            {isLoading && <LoadingState />}
-
-            {currentExplanation && !isLoading && (
-              <ExplanationCard
-                explanation={currentExplanation}
-                onSave={handleSave}
-                onRelatedClick={(concept) => {
-                  setInputText(concept);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <Header 
+        darkMode={darkMode} 
+        toggleDarkMode={toggleDarkMode}
+        onAboutClick={handleAboutClick}
+      />
+      
+      <main className="pb-20 px-4 py-6">
+        <div className="max-w-4xl mx-auto">
+          {activeTab === 'home' && (
+            <div className="space-y-6">
+              <TextInput 
+                value={inputText}
+                onChange={setInputText}
               />
-            )}
-          </div>
-        )}
-        
-      {activeTab === 'library' && (
+              
+              <LevelSelector
+                selectedLevel={selectedLevel}
+                onSelectLevel={setSelectedLevel}
+              />
+              
+              <ExplainButton
+                onClick={handleExplain}
+                disabled={isInputEmpty || isOverLimit}
+                isLoading={isLoading}
+              />
+
+              {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <p className="text-red-800 dark:text-red-200">
+                    ❌ Error: {error}
+                  </p>
+                </div>
+              )}
+
+              {isLoading && <LoadingState />}
+
+              {currentExplanation && !isLoading && (
+                <ExplanationCard
+                  explanation={currentExplanation}
+                  onSave={handleSave}
+                  onRelatedClick={(concept) => {
+                    setInputText(concept);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              )}
+            </div>
+          )}
+          
+       {activeTab === 'library' && (
   <div>
     <div className="mb-6">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
         📚 My Library
       </h1>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-gray-600 dark:text-gray-400 mb-4">
         {library.length} saved {library.length === 1 ? 'concept' : 'concepts'}
       </p>
+
+      {/* Search and Sort */}
+      {library.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="Search concepts..."
+              className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                       placeholder-gray-400 dark:placeholder-gray-500
+                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                       transition-colors"
+            />
+            <svg 
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+              Sort:
+            </label>
+            <select
+              value={librarySort}
+              onChange={(e) => setLibrarySort(e.target.value)}
+              className="px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                       text-sm font-medium cursor-pointer
+                       hover:border-purple-400 dark:hover:border-purple-500
+                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                       transition-colors"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="a-z">A → Z</option>
+              <option value="z-a">Z → A</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
 
     {library.length === 0 ? (
@@ -209,45 +277,110 @@ return (
         description="Save explanations to your library to review them later. Click the Save button on any explanation to add it here."
       />
     ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {library.map((explanation) => (
-          <LibraryCard
-            key={explanation.id}
-            explanation={explanation}
-            onView={() => handleViewFromLibrary(explanation)}
-            onDelete={() => handleDeleteFromLibrary(explanation.id)}
-          />
-        ))}
-      </div>
-    )}
-  </div>
-)}
-        
-        {activeTab === 'progress' && (
+      <>
+        {/* Results count */}
+        {librarySearch && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {[...library].filter((explanation) => {
+              const searchLower = librarySearch.toLowerCase();
+              return (
+                explanation.concept.toLowerCase().includes(searchLower) ||
+                explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                explanation.level.toLowerCase().includes(searchLower)
+              );
+            }).length} result{[...library].filter((explanation) => {
+              const searchLower = librarySearch.toLowerCase();
+              return (
+                explanation.concept.toLowerCase().includes(searchLower) ||
+                explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                explanation.level.toLowerCase().includes(searchLower)
+              );
+            }).length !== 1 ? 's' : ''} found
+          </p>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...library]
+            .filter((explanation) => {
+              if (!librarySearch) return true;
+              const searchLower = librarySearch.toLowerCase();
+              return (
+                explanation.concept.toLowerCase().includes(searchLower) ||
+                explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                explanation.level.toLowerCase().includes(searchLower)
+              );
+            })
+            .sort((a, b) => {
+              switch (librarySort) {
+                case 'newest':
+                  return new Date(b.timestamp) - new Date(a.timestamp);
+                case 'oldest':
+                  return new Date(a.timestamp) - new Date(b.timestamp);
+                case 'a-z':
+                  return a.concept.localeCompare(b.concept);
+                case 'z-a':
+                  return b.concept.localeCompare(a.concept);
+                default:
+                  return 0;
+              }
+            })
+            .map((explanation) => (
+              <LibraryCard
+                key={explanation.id}
+                explanation={explanation}
+                onView={() => handleViewFromLibrary(explanation)}
+                onDelete={() => handleDeleteFromLibrary(explanation.id)}
+              />
+            ))}
+        </div>
+
+        {/* No results message */}
+        {librarySearch && [...library].filter((explanation) => {
+          const searchLower = librarySearch.toLowerCase();
+          return (
+            explanation.concept.toLowerCase().includes(searchLower) ||
+            explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+            explanation.level.toLowerCase().includes(searchLower)
+          );
+        }).length === 0 && (
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              📊 Progress Page
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Learning stats will go here
+            <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+              No concepts found for "{librarySearch}"
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">
+              Try a different search term
             </p>
           </div>
         )}
-      </div>
-    </main>
-
-    <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-    
-    {/* Toast notifications */}
-    {toast && (
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast(null)}
-      />
+      </>
     )}
   </div>
-);
+)}
+          
+          {activeTab === 'progress' && (
+            <ProgressPage library={library} />
+          )}
+        </div>
+      </main>
+
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      {/* Toast notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* About Modal */}
+      <AboutModal 
+        isOpen={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
+      />
+    </div>
+  );
 }
 
 export default App;
