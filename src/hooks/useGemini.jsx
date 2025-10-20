@@ -36,11 +36,12 @@ if (inMatch) {
   const xPart = inMatch[1].trim().split(/\s+/).slice(0, 2).join(' ');
   return fixCapitalization(xPart);
 }
-  // Remove question words
-  let cleaned = userInput
-    .replace(/^(what is|what are|what's|explain|tell me about|how does|how do|why does|why do|when|where|the)\s+/gi, '')
-    .replace(/\?/g, '')
-    .trim();
+  // Remove question words AND articles
+let cleaned = userInput
+  .replace(/^(what is|what are|what's|whats|explain|tell me about|how does|how do|why does|why do|when|where)\s+/gi, '')
+  .replace(/^(the|a|an)\s+/gi, '') // Remove leading articles
+  .replace(/\?/g, '')
+  .trim();
 
   // If cleaned is empty or too short, use first meaningful words from original
   if (!cleaned || cleaned.length < 3) {
