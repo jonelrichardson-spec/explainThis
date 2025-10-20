@@ -80,10 +80,15 @@ function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onVie
           <div className="flex items-start gap-2 flex-1">
             <span className="text-2xl mt-0.5">{styles.emoji}</span>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight mb-1 truncate">
-                {explanation.concept}
-              </h3>
-              <div className="flex items-center gap-2 text-sm">
+             <h3 
+  className="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight mb-1"
+  title={explanation.concept} // Full title on hover
+>
+  {explanation.concept.length > 40 
+    ? `${explanation.concept.substring(0, 40)}...` 
+    : explanation.concept}
+</h3>
+  <div className="flex items-center gap-2 text-sm">
                 <span 
                   className="capitalize font-medium"
                   style={{ color: styles.color }}

@@ -7,7 +7,7 @@ import ExplainButton from './components/ExplainButton';
 import LoadingState from './components/LoadingState';
 import ExplanationCard from './components/ExplanationCard';
 import Toast from './components/Toast';
-import { useGemini } from './hooks/useGemini';
+import { useGemini } from './hooks/useGemini.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import LibraryCard from './components/LibraryCard';
