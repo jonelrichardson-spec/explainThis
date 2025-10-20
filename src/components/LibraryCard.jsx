@@ -1,4 +1,4 @@
-import { Trash2, BookOpen } from 'lucide-react';
+import { Trash2, BookOpen, Check } from 'lucide-react';
 
 const LEVEL_STYLES = {
   beginner: {
@@ -33,7 +33,7 @@ const LEVEL_STYLES = {
   }
 };
 
-function LibraryCard({ explanation, onView, onDelete }) {
+function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onView, onDelete }) {
   const styles = LEVEL_STYLES[explanation.level];
   const date = new Date(explanation.timestamp).toLocaleDateString('en-US', {
     month: 'short',
@@ -41,11 +41,34 @@ function LibraryCard({ explanation, onView, onDelete }) {
     year: 'numeric'
   });
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 
-                    hover:shadow-lg transition-all duration-200 hover:-translate-y-1 overflow-hidden">
-      
-      {/* Header with level color */}
+  const handleCardClick = () => {
+    if (isSelectionMode) {
+      onSelect();
+    } else {
+      onView();
+    }
+  };
+
+ return (
+  <div 
+    onClick={handleCardClick}
+    className={`bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 
+                hover:shadow-lg transition-all duration-200 overflow-hidden relative
+                ${isSelectionMode ? 'cursor-pointer hover:scale-[1.02]' : ''}
+                ${isSelected 
+                  ? 'ring-4 ring-purple-500 border-purple-500 bg-purple-50/50 dark:bg-purple-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:-translate-y-1'}`}
+  >
+    
+    {/* Selection Indicator - Full Card Overlay */}
+    {isSelectionMode && isSelected && (
+      <div className="absolute top-3 right-3 z-10">
+        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+          <Check className="w-5 h-5 text-white" />
+        </div>
+      </div>
+    )}  
+      {/* Header */}
       <div 
         className="p-4 border-b-2"
         style={{
@@ -81,26 +104,34 @@ function LibraryCard({ explanation, onView, onDelete }) {
           {explanation.explanation.simple.substring(0, 150)}...
         </p>
 
-        {/* Actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={onView}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 
-                     text-white rounded-lg font-medium transition-all duration-200 hover:opacity-90"
-            style={{ backgroundColor: styles.color }}
-          >
-            <BookOpen className="w-4 h-4" />
-            View
-          </button>
-          
-          <button
-            onClick={onDelete}
-            className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Actions - Only show when NOT in selection mode */}
+        {!isSelectionMode && (
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onView();
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 
+                       text-white rounded-lg font-medium transition-colors duration-200"
+              style={{ backgroundColor: styles.color }}
+            >
+              <BookOpen className="w-4 h-4" />
+              View
+            </button>
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

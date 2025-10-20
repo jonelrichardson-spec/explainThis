@@ -4,7 +4,67 @@ import { generatePrompt, parseResponse } from '../utils/geminiPrompts';
 export const useGemini = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+const extractTechnicalTerm = (userInput) => {
+  // Common tech acronyms that should stay uppercase
+  const acronyms = ['API', 'APIs', 'HTML', 'CSS', 'JS', 'SQL', 'REST', 'HTTP', 'HTTPS', 
+                    'URL', 'JSON', 'XML', 'AJAX', 'DOM', 'CLI', 'GUI', 'SDK', 'IDE',
+                    'AWS', 'GCP', 'CDN', 'DNS', 'VPN', 'SSH', 'FTP', 'TCP', 'IP',
+                    'UI', 'UX', 'CI', 'CD', 'NPM', 'JWT', 'OAuth'];
+  
+ const fixCapitalization = (term) => {
+  return term
+    .split(/\s+/)
+    .map(word => {
+      // Check if word is an acronym (case-insensitive)
+      const upperWord = word.toUpperCase();
+      if (acronyms.includes(upperWord)) {
+        return upperWord;
+      }
+      // Normal title case
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
 
+// If input is very short (< 30 chars), just use it as-is
+if (userInput.length < 30) {
+  const cleaned = userInput
+    .replace(/^(what is|what are|explain|tell me about|how does|how do|why|when|where)\s+/gi, '')
+    .replace(/\?/g, '')
+    .trim();
+  
+  const words = cleaned.split(/\s+/).slice(0, 3).join(' ');
+  return fixCapitalization(words);
+}
+
+// For longer text, look for technical patterns
+const technicalPatterns = [
+  // "about X", "called X"
+  /(?:about|called)\s+([A-Za-z0-9/\-\+\.]+(?:\s+[A-Za-z0-9/\-\+\.]*){0,2})/i,
+  // Technical terms (capitalized or has special chars)
+  /\b([A-Z][A-Za-z0-9/\-\+\.]+(?:\s+[A-Z][A-Za-z0-9/\-\+\.]*){0,2})\b/,
+  // Common tech terms (lowercase)
+  /\b(api|apis|html|css|javascript|react|python|database|server|middleware|async|await|npm|git|json|sql|rest)\b/i
+];
+
+for (const pattern of technicalPatterns) {
+  const match = userInput.match(pattern);
+  if (match) {
+    return fixCapitalization(match[1]);
+  }
+}
+
+// Fallback: use first capitalized word or first 3 words
+const words = userInput.split(/\s+/);
+const capitalizedWord = words.find(w => /^[A-Z]/.test(w));
+
+if (capitalizedWord) {
+  return fixCapitalization(capitalizedWord);
+}
+
+// Last resort: first 3 words
+return fixCapitalization(words.slice(0, 3).join(' '));
+};
   const explainConcept = async (userInput, level) => {
     setIsLoading(true);
     setError(null);
@@ -58,15 +118,15 @@ export const useGemini = () => {
       const parsedExplanation = parseResponse(text);
 
       const explanation = {
-        id: crypto.randomUUID(),
-        concept: userInput,
-        level: level,
-        timestamp: new Date().toISOString(),
-        explanation: parsedExplanation,
-        category: 'General',
-        saved: false
-      };
-
+  id: crypto.randomUUID(),
+  concept: extractTechnicalTerm(userInput), // ← CHANGED: use extracted term
+  fullQuestion: userInput, // ← NEW: store original question
+  level: level,
+  timestamp: new Date().toISOString(),
+  explanation: parsedExplanation,
+  category: 'General',
+  saved: false
+};
       setIsLoading(false);
       return explanation;
 

@@ -14,6 +14,7 @@ import LibraryCard from './components/LibraryCard';
 import EmptyState from './components/EmptyState';
 import ProgressPage from './components/ProgressPage';
 import AboutModal from './components/AboutModal';
+import { Trash2 } from 'lucide-react';
 
 // Function to normalize library data
 function normalizeLibraryData() {
@@ -40,7 +41,7 @@ async function testModels() {
   
   console.log('🔍 Testing models...');
   console.log('API Key present:', !!apiKey);
-  
+ 
   const modelsToTry = [
     'gemini-pro',
     'gemini-1.5-pro', 
@@ -74,6 +75,8 @@ function App() {
   const [currentExplanation, setCurrentExplanation] = useState(null);
   const [library, setLibrary] = useLocalStorage('explainThis_library', []);
   const [toast, setToast] = useState(null);
+   const [selectedCards, setSelectedCards] = useState([]);
+const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 const [librarySearch, setLibrarySearch] = useState('');
   const { explainConcept, isLoading, error } = useGemini();
@@ -209,18 +212,86 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
             </div>
           )}
           
-       {activeTab === 'library' && (
+ {activeTab === 'library' && (
   <div>
     <div className="mb-6">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-        📚 My Library
-      </h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-4">
-        {library.length} saved {library.length === 1 ? 'concept' : 'concepts'}
-      </p>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            📚 My Library
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {library.length} saved {library.length === 1 ? 'concept' : 'concepts'}
+            {isSelectionMode && selectedCards.length > 0 && (
+              <span className="ml-2 text-purple-600 dark:text-purple-400 font-semibold">
+                • {selectedCards.length} selected
+              </span>
+            )}
+          </p>
+        </div>
+
+        {/* Selection Mode Toggle & Bulk Actions */}
+        {library.length > 0 && (
+          <div className="flex items-center gap-3">
+            {isSelectionMode ? (
+              <>
+                <button
+                  onClick={() => {
+                    setSelectedCards([]);
+                    setIsSelectionMode(false);
+                  }}
+                  className="px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 
+                           text-gray-700 dark:text-gray-300 font-medium
+                           hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                
+                {selectedCards.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setSelectedCards(library.map(item => item.id))}
+                      className="px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30
+                               text-purple-700 dark:text-purple-300 font-medium
+                               hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                    >
+                      Select All
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete ${selectedCards.length} selected concept${selectedCards.length !== 1 ? 's' : ''}?`)) {
+                          setLibrary(library.filter(item => !selectedCards.includes(item.id)));
+                          setSelectedCards([]);
+                          setIsSelectionMode(false);
+                          setToast({ message: `🗑️ Deleted ${selectedCards.length} concept${selectedCards.length !== 1 ? 's' : ''}`, type: 'info' });
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium
+                               hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete ({selectedCards.length})
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={() => setIsSelectionMode(true)}
+                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800
+                         text-gray-700 dark:text-gray-300 font-medium
+                         hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Select Multiple
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Search and Sort */}
-      {library.length > 0 && (
+      {library.length > 0 && !isSelectionMode && (
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search Bar */}
           <div className="flex-1 relative">
@@ -279,7 +350,7 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
     ) : (
       <>
         {/* Results count */}
-        {librarySearch && (
+        {librarySearch && !isSelectionMode && (
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             {[...library].filter((explanation) => {
               const searchLower = librarySearch.toLowerCase();
@@ -299,7 +370,7 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
           </p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...library]
             .filter((explanation) => {
               if (!librarySearch) return true;
@@ -328,8 +399,17 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
               <LibraryCard
                 key={explanation.id}
                 explanation={explanation}
-                onView={() => handleViewFromLibrary(explanation)}
-                onDelete={() => handleDeleteFromLibrary(explanation.id)}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedCards.includes(explanation.id)}
+                onSelect={() => {
+                  if (selectedCards.includes(explanation.id)) {
+                    setSelectedCards(selectedCards.filter(id => id !== explanation.id));
+                  } else {
+                    setSelectedCards([...selectedCards, explanation.id]);
+                  }
+                }}
+                onView={() => !isSelectionMode && handleViewFromLibrary(explanation)}
+                onDelete={() => !isSelectionMode && handleDeleteFromLibrary(explanation.id)}
               />
             ))}
         </div>
@@ -356,10 +436,10 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
     )}
   </div>
 )}
-          
-          {activeTab === 'progress' && (
-            <ProgressPage library={library} />
-          )}
+
+{activeTab === 'progress' && (
+  <ProgressPage library={library} />
+)}
         </div>
       </main>
 

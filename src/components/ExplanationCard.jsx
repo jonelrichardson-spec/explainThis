@@ -31,26 +31,26 @@ const LEVEL_STYLES = {
     buttonHoverBg: '#059669',
     emoji: '🎓'
   },
-advanced: {
-  borderColor: '#db2777',      // pink-600
-  bgColor: '#fce7f3',          // pink-100
-  darkBgColor: 'rgba(219, 39, 119, 0.2)',
-  textColor: '#db2777',        // pink-600
-  lightTextColor: '#ec4899',   // pink-500
-  buttonBg: '#fce7f3',
-  buttonHoverBg: '#db2777',
-  emoji: '🎯'
-},
-expert: {
-  borderColor: '#f59e0b',      // amber-500
-  bgColor: '#fef3c7',          // amber-100
-  darkBgColor: 'rgba(245, 158, 11, 0.2)',
-  textColor: '#f59e0b',        // amber-500
-  lightTextColor: '#fbbf24',   // amber-400
-  buttonBg: '#fef3c7',
-  buttonHoverBg: '#f59e0b',
-  emoji: '🔬'
-}
+  advanced: {
+    borderColor: '#db2777',
+    bgColor: '#fce7f3',
+    darkBgColor: 'rgba(219, 39, 119, 0.2)',
+    textColor: '#db2777',
+    lightTextColor: '#ec4899',
+    buttonBg: '#fce7f3',
+    buttonHoverBg: '#db2777',
+    emoji: '🎯'
+  },
+  expert: {
+    borderColor: '#f59e0b',
+    bgColor: '#fef3c7',
+    darkBgColor: 'rgba(245, 158, 11, 0.2)',
+    textColor: '#f59e0b',
+    lightTextColor: '#fbbf24',
+    buttonBg: '#fef3c7',
+    buttonHoverBg: '#f59e0b',
+    emoji: '🔬'
+  }
 };
 
 function ExplanationCard({ explanation, onSave, onRelatedClick }) {
@@ -84,7 +84,7 @@ ${explanation.explanation.relatedConcepts.join(', ')}
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 
                     rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 
-                    overflow-hidden animate-fadeInUp">
+                    overflow-hidden animate-fadeInUp max-w-7xl mx-auto">
       
       {/* Level Header */}
       <div 
@@ -105,7 +105,7 @@ ${explanation.explanation.relatedConcepts.join(', ')}
                 className="text-sm font-semibold capitalize"
                 style={{ color: styles.textColor }}
               >
-                {explanation.level} Level
+                {explanation.level}
               </p>
             </div>
           </div>
@@ -135,41 +135,49 @@ ${explanation.explanation.relatedConcepts.join(', ')}
         </div>
       </div>
 
-      {/* Content Sections */}
-      <div className="p-6 md:p-8 space-y-6">
-        
-        {/* Simple Explanation */}
-        <Section
-          icon={<BookOpen className="w-5 h-5" style={{ color: styles.textColor }} />}
-          title="SIMPLE EXPLANATION"
-          content={explanation.explanation.simple}
-        />
+      {/* Content - Two Column Layout on Desktop */}
+      <div className="p-6 md:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Simple Explanation */}
+            <Section
+              icon={<BookOpen className="w-5 h-5" style={{ color: styles.textColor }} />}
+              title="SIMPLE EXPLANATION"
+              content={explanation.explanation.simple}
+            />
 
-        {/* Analogy */}
-        <Section
-          icon={<RefreshCw className="w-5 h-5" style={{ color: styles.textColor }} />}
-          title="ANALOGY"
-          content={explanation.explanation.analogy}
-          bgGray
-        />
+            {/* Analogy */}
+            <Section
+              icon={<RefreshCw className="w-5 h-5" style={{ color: styles.textColor }} />}
+              title="ANALOGY"
+              content={explanation.explanation.analogy}
+              bgGray
+            />
+          </div>
 
-        {/* Real-World Example */}
-        <Section
-          icon={<FileText className="w-5 h-5" style={{ color: styles.textColor }} />}
-          title="REAL-WORLD EXAMPLE"
-          content={explanation.explanation.example}
-        />
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Real-World Example */}
+            <Section
+              icon={<FileText className="w-5 h-5" style={{ color: styles.textColor }} />}
+              title="REAL-WORLD EXAMPLE"
+              content={explanation.explanation.example}
+            />
 
-        {/* Why This Matters */}
-        <Section
-          icon={<Target className="w-5 h-5" style={{ color: styles.textColor }} />}
-          title="WHY THIS MATTERS"
-          content={explanation.explanation.whyItMatters}
-          bgGray
-        />
+            {/* Why This Matters */}
+            <Section
+              icon={<Target className="w-5 h-5" style={{ color: styles.textColor }} />}
+              title="WHY THIS MATTERS"
+              content={explanation.explanation.whyItMatters}
+              bgGray
+            />
+          </div>
+        </div>
 
-        {/* Related Concepts */}
-        <div className="space-y-3">
+        {/* Related Concepts - Full Width at Bottom */}
+        <div className="space-y-3 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <Link2 className="w-5 h-5" style={{ color: styles.textColor }} />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -208,10 +216,14 @@ ${explanation.explanation.relatedConcepts.join(', ')}
 
 function Section({ icon, title, content, bgGray }) {
   return (
-    <div className={`space-y-3 ${bgGray ? 'bg-gray-50/50 dark:bg-gray-800/50 -mx-6 md:-mx-8 px-6 md:px-8 py-6' : ''}`}>
-      <div className="flex items-center gap-2">
+    <div className={`space-y-3 p-5 rounded-xl border-[3px] ${
+      bgGray 
+        ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-600' 
+        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
+    }`}>
+      <div className="flex items-center gap-2 pb-2 border-b-2 border-gray-300 dark:border-gray-600">
         {icon}
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h3 className="text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300">
           {title}
         </h3>
       </div>
