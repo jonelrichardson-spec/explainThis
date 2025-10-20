@@ -25,7 +25,7 @@ function BottomNav({ activeTab, setActiveTab }) {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
             >
-              <Icon className={`w-6 h-6 ${isActive ? 'mb-1' : 'mb-1'}`} />
+              <Icon className="w-6 h-6 mb-1" />
               <span className="text-xs font-medium">{tab.label}</span>
             </button>
           );
