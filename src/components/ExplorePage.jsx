@@ -194,7 +194,7 @@ const ExplorePage = ({
                        flex items-center justify-center gap-2"
             >
               <Lightbulb className="w-5 h-5" />
-              Explain this
+              Explain This 💡
             </button>
           </div>
         </div>
