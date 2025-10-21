@@ -7,6 +7,19 @@ export const generatePrompt = (userInput, level) => {
     expert: "precise technical language, architectural trade-offs, performance implications, assume deep technical knowledge"
   };
 
+  // Add acronym instructions based on level
+  const acronymInstructions = level === 'beginner' 
+    ? `
+⚠️ ACRONYM RULE (CRITICAL FOR BEGINNER LEVEL):
+- If the concept is an acronym (API, HTML, CSS, SQL, REST, etc.), you MUST start your Simple Explanation by stating what the acronym stands for
+- Example: "API stands for Application Programming Interface. It's..."
+- Example: "HTML stands for HyperText Markup Language. It's..."
+- This is MANDATORY for beginner level - never skip this step
+` 
+    : level === 'elementary'
+    ? '- If explaining an acronym, briefly mention what it stands for in the first paragraph\n'
+    : '';
+
   return `You are an expert educator explaining technical concepts to a ${level}-level student.
 
 YOUR TASK: Explain the following technical concept in a complete, structured format.
@@ -34,7 +47,7 @@ YOUR RESPONSE MUST FOLLOW THIS EXACT STRUCTURE:
 [List 3-5 related technical terms a learner should explore next, separated by commas]
 
 CRITICAL RULES:
-- Use ${level}-appropriate language throughout
+${acronymInstructions}- Use ${level}-appropriate language throughout
 - Be encouraging and clear, never condescending
 - NO unexplained jargon - if you use a technical term, define it immediately
 - Focus on understanding, not memorization
