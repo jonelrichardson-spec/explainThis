@@ -67,7 +67,7 @@ const AboutModal = ({ isOpen, onClose }) => {
             </h3>
             <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
-                Hi! I'm Jonel. I spent 10 years teaching preschoolers in Japan, 
+                Hi! I'm Jonel. I spent 8 years teaching preschoolers in Japan, 
                 breaking down complex ideas into language a four-year-old could understand.
               </p>
               <p>
