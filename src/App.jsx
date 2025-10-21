@@ -1,3 +1,4 @@
+import ScrollToTop from './components/ScrollToTop';
 import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
@@ -35,39 +36,6 @@ function normalizeLibraryData() {
   }
 }
 
-// Test function to find working model
-async function testModels() {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const genAI = new GoogleGenerativeAI(apiKey);
-  
-  console.log('🔍 Testing models...');
-  console.log('API Key present:', !!apiKey);
- 
-  const modelsToTry = [
-    'gemini-pro',
-    'gemini-1.5-pro', 
-    'gemini-1.5-flash',
-    'models/gemini-pro',
-    'models/gemini-1.5-pro',
-    'models/gemini-1.5-flash'
-  ];
-
-  for (const modelName of modelsToTry) {
-    try {
-      console.log(`Testing: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent('Say hello');
-      const response = result.response.text();
-      console.log(`✅ ${modelName} WORKS!`);
-      return modelName;
-    } catch (err) {
-      console.log(`❌ ${modelName} failed`);
-    }
-  }
-  console.log('No models worked ❌');
-  return null;
-}
-
 function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
@@ -86,10 +54,7 @@ function App() {
   
   const { explainConcept, isLoading, error } = useGemini();
 
-  // Test models on page load
-  useEffect(() => {
-    testModels();
-  }, []);
+
 
   // Run once on app load to fix data
   useEffect(() => {
@@ -465,6 +430,8 @@ const handleExploreExplain = async (concept, level) => {
 )}
         </div>
       </main>
+
+       <ScrollToTop />
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       
