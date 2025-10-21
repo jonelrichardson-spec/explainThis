@@ -116,11 +116,17 @@ function App() {
     }
   };
 
-  const handleViewFromLibrary = (explanation) => {
-    setCurrentExplanation(explanation);
-    setActiveTab('home');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+ const handleViewFromLibrary = (explanation) => {
+  setCurrentExplanation(explanation);
+  setActiveTab('home');
+  
+  setTimeout(() => {
+    const section = document.getElementById('explanation-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 150);
+};
 
 const handleExploreExplain = async (concept, level) => {
   setSelectedLevel(level);
@@ -177,18 +183,20 @@ const handleExploreExplain = async (concept, level) => {
               {isLoading && <LoadingState />}
 
               {currentExplanation && !isLoading && (
-                <ExplanationCard
-                  explanation={currentExplanation}
-                  onSave={handleSave}
-                  onRelatedClick={(concept) => {
-                    setInputText(concept);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
+                <div id="explanation-section">
+                  <ExplanationCard
+                    explanation={currentExplanation}
+                    onSave={handleSave}
+                    onRelatedClick={(concept) => {
+                      setInputText(concept);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  />
+                </div>
               )}
             </div>
           )}
-          
+         
           {activeTab === 'library' && (
             <div>
               <div className="mb-6">
