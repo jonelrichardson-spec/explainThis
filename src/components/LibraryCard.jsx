@@ -33,7 +33,7 @@ const LEVEL_STYLES = {
   }
 };
 
-function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onView, onDelete }) {
+function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onView, onDelete, onDeleteRequest }) {
   const styles = LEVEL_STYLES[explanation.level];
   const date = new Date(explanation.timestamp).toLocaleDateString('en-US', {
     month: 'short',
@@ -49,25 +49,32 @@ function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onVie
     }
   };
 
- return (
-  <div 
-    onClick={handleCardClick}
-    className={`bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 
-                hover:shadow-lg transition-all duration-200 overflow-hidden relative
-                ${isSelectionMode ? 'cursor-pointer hover:scale-[1.02]' : ''}
-                ${isSelected 
-                  ? 'ring-4 ring-purple-500 border-purple-500 bg-purple-50/50 dark:bg-purple-900/20' 
-                  : 'border-gray-200 dark:border-gray-700 hover:-translate-y-1'}`}
-  >
-    
-    {/* Selection Indicator - Full Card Overlay */}
-    {isSelectionMode && isSelected && (
-      <div className="absolute top-3 right-3 z-10">
-        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
-          <Check className="w-5 h-5 text-white" />
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    // Show the confirmation modal/toast
+    onDeleteRequest(explanation);
+  };
+
+  return (
+    <div 
+      onClick={handleCardClick}
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 
+                  hover:shadow-lg transition-all duration-200 overflow-hidden relative
+                  ${isSelectionMode ? 'cursor-pointer hover:scale-[1.02]' : ''}
+                  ${isSelected 
+                    ? 'ring-4 ring-purple-500 border-purple-500 bg-purple-50/50 dark:bg-purple-900/20' 
+                    : 'border-gray-200 dark:border-gray-700 hover:-translate-y-1'}`}
+    >
+      
+      {/* Selection Indicator - Full Card Overlay */}
+      {isSelectionMode && isSelected && (
+        <div className="absolute top-3 right-3 z-10">
+          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+            <Check className="w-5 h-5 text-white" />
+          </div>
         </div>
-      </div>
-    )}  
+      )}  
+      
       {/* Header */}
       <div 
         className="p-4 border-b-2"
@@ -80,15 +87,15 @@ function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onVie
           <div className="flex items-start gap-2 flex-1">
             <span className="text-2xl mt-0.5">{styles.emoji}</span>
             <div className="flex-1 min-w-0">
-             <h3 
-  className="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight mb-1"
-  title={explanation.concept} // Full title on hover
->
-  {explanation.concept.length > 40 
-    ? `${explanation.concept.substring(0, 40)}...` 
-    : explanation.concept}
-</h3>
-  <div className="flex items-center gap-2 text-sm">
+              <h3 
+                className="font-bold text-gray-900 dark:text-gray-100 text-lg leading-tight mb-1"
+                title={explanation.concept} // Full title on hover
+              >
+                {explanation.concept.length > 40 
+                  ? `${explanation.concept.substring(0, 40)}...` 
+                  : explanation.concept}
+              </h3>
+              <div className="flex items-center gap-2 text-sm">
                 <span 
                   className="capitalize font-medium"
                   style={{ color: styles.color }}
@@ -126,10 +133,7 @@ function LibraryCard({ explanation, isSelectionMode, isSelected, onSelect, onVie
             </button>
             
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
+              onClick={handleDeleteClick}
               className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
               title="Delete"
             >

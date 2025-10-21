@@ -10,13 +10,13 @@ import ExplanationCard from './components/ExplanationCard';
 import Toast from './components/Toast';
 import { useGemini } from './hooks/useGemini.jsx';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import LibraryCard from './components/LibraryCard';
 import EmptyState from './components/EmptyState';
 import ProgressPage from './components/ProgressPage';
 import AboutModal from './components/AboutModal';
 import ExplorePage from './components/ExplorePage';
 import { Trash2 } from 'lucide-react';
+import DeleteConfirmModal from './components/DeleteConfirmModal';
 
 // Function to normalize library data
 function normalizeLibraryData() {
@@ -51,10 +51,9 @@ function App() {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [librarySearch, setLibrarySearch] = useState('');
   const [librarySort, setLibrarySort] = useState('newest');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   
   const { explainConcept, isLoading, error } = useGemini();
-
-
 
   // Run once on app load to fix data
   useEffect(() => {
@@ -92,6 +91,14 @@ function App() {
     const explanation = await explainConcept(inputText, selectedLevel);
     if (explanation) {
       setCurrentExplanation(explanation);
+      
+      // Scroll to explanation after it renders
+      setTimeout(() => {
+        const section = document.getElementById('explanation-section');
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
     }
   };
 
@@ -109,36 +116,53 @@ function App() {
     setToast({ message: '✅ Saved to Library!', type: 'success' });
   };
 
-  const handleDeleteFromLibrary = (id) => {
-    if (confirm('Are you sure you want to delete this from your library?')) {
-      setLibrary(library.filter(item => item.id !== id));
-      setToast({ message: '🗑️ Deleted from library', type: 'info' });
+  const handleDeleteRequest = (explanation) => {
+    setDeleteConfirm(explanation);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirm) {
+      const updatedLibrary = library.filter(item => item.id !== deleteConfirm.id);
+      setLibrary(updatedLibrary);
+      setDeleteConfirm(null);
+      setToast({
+        message: '🗑️ Deleted from library',
+        type: 'success'
+      });
     }
   };
 
- const handleViewFromLibrary = (explanation) => {
-  setCurrentExplanation(explanation);
-  setActiveTab('home');
-  
-  setTimeout(() => {
-    const section = document.getElementById('explanation-section');
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, 150);
-};
+  const handleCancelDelete = () => {
+    setDeleteConfirm(null);
+  };
 
-const handleExploreExplain = async (concept, level) => {
-  setSelectedLevel(level);
-  setIsExploreLoading(true); // ADD THIS
-  
-  const explanation = await explainConcept(concept, level);
-  if (explanation) {
-    setExploreExplanation(explanation);
-  }
-  
-  setIsExploreLoading(false); // ADD THIS
-};
+  const handleCopy = () => {
+    setToast({ message: '📋 Copied to clipboard!', type: 'success' });
+  };
+
+  const handleViewFromLibrary = (explanation) => {
+    setCurrentExplanation(explanation);
+    setActiveTab('home');
+    
+    setTimeout(() => {
+      const section = document.getElementById('explanation-section');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
+
+  const handleExploreExplain = async (concept, level) => {
+    setSelectedLevel(level);
+    setIsExploreLoading(true);
+    
+    const explanation = await explainConcept(concept, level);
+    if (explanation) {
+      setExploreExplanation(explanation);
+    }
+    
+    setIsExploreLoading(false);
+  };
 
   const isInputEmpty = !inputText.trim();
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
@@ -187,6 +211,7 @@ const handleExploreExplain = async (concept, level) => {
                   <ExplanationCard
                     explanation={currentExplanation}
                     onSave={handleSave}
+                    onCopy={handleCopy}
                     onRelatedClick={(concept) => {
                       setInputText(concept);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -391,7 +416,7 @@ const handleExploreExplain = async (concept, level) => {
                             }
                           }}
                           onView={() => !isSelectionMode && handleViewFromLibrary(explanation)}
-                          onDelete={() => !isSelectionMode && handleDeleteFromLibrary(explanation.id)}
+                          onDeleteRequest={handleDeleteRequest}
                         />
                       ))}
                   </div>
@@ -422,24 +447,25 @@ const handleExploreExplain = async (concept, level) => {
             <ProgressPage library={library} />
           )}
 
-    {activeTab === 'explore' && (
-  <ExplorePage 
-    onExplainConcept={handleExploreExplain}
-    currentExplanation={exploreExplanation}
-    isLoading={isExploreLoading} // Changed from isLoading
-    onSave={handleSave}
-    onRelatedClick={(concept) => {
-      setInputText(concept);
-      setActiveTab('home');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }}
-    onBack={() => setExploreExplanation(null)}
-  />
-)}
+          {activeTab === 'explore' && (
+            <ExplorePage 
+              onExplainConcept={handleExploreExplain}
+              currentExplanation={exploreExplanation}
+              isLoading={isExploreLoading}
+              onSave={handleSave}
+              onCopy={handleCopy}
+              onRelatedClick={(concept) => {
+                setInputText(concept);
+                setActiveTab('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onBack={() => setExploreExplanation(null)}
+            />
+          )}
         </div>
       </main>
 
-       <ScrollToTop />
+      <ScrollToTop />
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       
@@ -448,6 +474,14 @@ const handleExploreExplain = async (concept, level) => {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+
+      {deleteConfirm && (
+        <DeleteConfirmModal
+          concept={deleteConfirm.concept}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
         />
       )}
 

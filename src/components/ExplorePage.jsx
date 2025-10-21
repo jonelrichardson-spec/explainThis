@@ -9,7 +9,8 @@ const ExplorePage = ({
   onExplainConcept, 
   currentExplanation, 
   isLoading, 
-  onSave, 
+  onSave,
+  onCopy,
   onRelatedClick,
   onBack 
 }) => {
@@ -60,6 +61,7 @@ const ExplorePage = ({
         <ExplanationCard
           explanation={currentExplanation}
           onSave={onSave}
+          onCopy={onCopy}
           onRelatedClick={onRelatedClick}
         />
       </div>
@@ -192,7 +194,7 @@ const ExplorePage = ({
                        flex items-center justify-center gap-2"
             >
               <Lightbulb className="w-5 h-5" />
-              Explain This
+              Explain this
             </button>
           </div>
         </div>

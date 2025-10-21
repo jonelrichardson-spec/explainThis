@@ -53,7 +53,7 @@ const LEVEL_STYLES = {
   }
 };
 
-function ExplanationCard({ explanation, onSave, onRelatedClick }) {
+function ExplanationCard({ explanation, onSave, onCopy, onRelatedClick }) {
   const styles = LEVEL_STYLES[explanation.level];
 
   const handleCopy = () => {
@@ -78,7 +78,11 @@ ${explanation.explanation.relatedConcepts.join(', ')}
     `.trim();
     
     navigator.clipboard.writeText(text);
-    alert('📋 Copied to clipboard!');
+    
+    // Call the onCopy prop to show toast
+    if (onCopy) {
+      onCopy();
+    }
   };
 
   return (
