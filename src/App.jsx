@@ -14,6 +14,7 @@ import LibraryCard from './components/LibraryCard';
 import EmptyState from './components/EmptyState';
 import ProgressPage from './components/ProgressPage';
 import AboutModal from './components/AboutModal';
+import ExplorePage from './components/ExplorePage';
 import { Trash2 } from 'lucide-react';
 
 // Function to normalize library data
@@ -73,14 +74,18 @@ function App() {
   const [inputText, setInputText] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('elementary');
   const [currentExplanation, setCurrentExplanation] = useState(null);
+  const [exploreExplanation, setExploreExplanation] = useState(null);
+  const [isExploreLoading, setIsExploreLoading] = useState(false); 
   const [library, setLibrary] = useLocalStorage('explainThis_library', []);
   const [toast, setToast] = useState(null);
-   const [selectedCards, setSelectedCards] = useState([]);
-const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedCards, setSelectedCards] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
-const [librarySearch, setLibrarySearch] = useState('');
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [librarySort, setLibrarySort] = useState('newest');
+  
   const { explainConcept, isLoading, error } = useGemini();
-const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z, z-a
+
   // Test models on page load
   useEffect(() => {
     testModels();
@@ -115,21 +120,17 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
   };
 
   const handleAboutClick = () => {
-    console.log('About clicked! Opening modal...');
     setShowAboutModal(true);
   };
 
   const handleExplain = async () => {
-    console.log('Explaining:', inputText, 'at level:', selectedLevel);
     const explanation = await explainConcept(inputText, selectedLevel);
-    console.log('Got explanation:', explanation);
     if (explanation) {
       setCurrentExplanation(explanation);
     }
   };
 
   const handleSave = () => {
-    // Check if already saved
     const alreadySaved = library.some(item => item.id === currentExplanation.id);
     
     if (alreadySaved) {
@@ -137,7 +138,6 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
       return;
     }
 
-    // Add to library
     const updatedExplanation = { ...currentExplanation, saved: true };
     setLibrary([updatedExplanation, ...library]);
     setCurrentExplanation(updatedExplanation);
@@ -156,6 +156,18 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
     setActiveTab('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+const handleExploreExplain = async (concept, level) => {
+  setSelectedLevel(level);
+  setIsExploreLoading(true); // ADD THIS
+  
+  const explanation = await explainConcept(concept, level);
+  if (explanation) {
+    setExploreExplanation(explanation);
+  }
+  
+  setIsExploreLoading(false); // ADD THIS
+};
 
   const isInputEmpty = !inputText.trim();
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
@@ -212,240 +224,250 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
             </div>
           )}
           
- {activeTab === 'library' && (
-  <div>
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            📚 My Library
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {library.length} saved {library.length === 1 ? 'concept' : 'concepts'}
-            {isSelectionMode && selectedCards.length > 0 && (
-              <span className="ml-2 text-purple-600 dark:text-purple-400 font-semibold">
-                • {selectedCards.length} selected
-              </span>
-            )}
-          </p>
-        </div>
+          {activeTab === 'library' && (
+            <div>
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                      📚 My Library
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {library.length} saved {library.length === 1 ? 'concept' : 'concepts'}
+                      {isSelectionMode && selectedCards.length > 0 && (
+                        <span className="ml-2 text-purple-600 dark:text-purple-400 font-semibold">
+                          • {selectedCards.length} selected
+                        </span>
+                      )}
+                    </p>
+                  </div>
 
-        {/* Selection Mode Toggle & Bulk Actions */}
-        {library.length > 0 && (
-          <div className="flex items-center gap-3">
-            {isSelectionMode ? (
-              <>
-                <button
-                  onClick={() => {
-                    setSelectedCards([]);
-                    setIsSelectionMode(false);
-                  }}
-                  className="px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 
-                           text-gray-700 dark:text-gray-300 font-medium
-                           hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                
-                {selectedCards.length > 0 && (
-                  <>
-                    <button
-                      onClick={() => setSelectedCards(library.map(item => item.id))}
-                      className="px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30
-                               text-purple-700 dark:text-purple-300 font-medium
-                               hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                    >
-                      Select All
-                    </button>
-                    
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete ${selectedCards.length} selected concept${selectedCards.length !== 1 ? 's' : ''}?`)) {
-                          setLibrary(library.filter(item => !selectedCards.includes(item.id)));
-                          setSelectedCards([]);
-                          setIsSelectionMode(false);
-                          setToast({ message: `🗑️ Deleted ${selectedCards.length} concept${selectedCards.length !== 1 ? 's' : ''}`, type: 'info' });
-                        }
-                      }}
-                      className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium
-                               hover:bg-red-700 transition-colors flex items-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete ({selectedCards.length})
-                    </button>
-                  </>
+                  {/* Selection Mode Toggle & Bulk Actions */}
+                  {library.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      {isSelectionMode ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedCards([]);
+                              setIsSelectionMode(false);
+                            }}
+                            className="px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 
+                                     text-gray-700 dark:text-gray-300 font-medium
+                                     hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          
+                          {selectedCards.length > 0 && (
+                            <>
+                              <button
+                                onClick={() => setSelectedCards(library.map(item => item.id))}
+                                className="px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30
+                                         text-purple-700 dark:text-purple-300 font-medium
+                                         hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                              >
+                                Select All
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Delete ${selectedCards.length} selected concept${selectedCards.length !== 1 ? 's' : ''}?`)) {
+                                    setLibrary(library.filter(item => !selectedCards.includes(item.id)));
+                                    setSelectedCards([]);
+                                    setIsSelectionMode(false);
+                                    setToast({ message: `🗑️ Deleted ${selectedCards.length} concept${selectedCards.length !== 1 ? 's' : ''}`, type: 'info' });
+                                  }
+                                }}
+                                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium
+                                         hover:bg-red-700 transition-colors flex items-center gap-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete ({selectedCards.length})
+                              </button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setIsSelectionMode(true)}
+                          className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800
+                                   text-gray-700 dark:text-gray-300 font-medium
+                                   hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Select Multiple
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Search and Sort */}
+                {library.length > 0 && !isSelectionMode && (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={librarySearch}
+                        onChange={(e) => setLibrarySearch(e.target.value)}
+                        placeholder="Search concepts..."
+                        className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 
+                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                                 placeholder-gray-400 dark:placeholder-gray-500
+                                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                                 transition-colors"
+                      />
+                      <svg 
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        Sort:
+                      </label>
+                      <select
+                        value={librarySort}
+                        onChange={(e) => setLibrarySort(e.target.value)}
+                        className="px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 
+                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                                 text-sm font-medium cursor-pointer
+                                 hover:border-purple-400 dark:hover:border-purple-500
+                                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                                 transition-colors"
+                      >
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="a-z">A → Z</option>
+                        <option value="z-a">Z → A</option>
+                      </select>
+                    </div>
+                  </div>
                 )}
-              </>
-            ) : (
-              <button
-                onClick={() => setIsSelectionMode(true)}
-                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800
-                         text-gray-700 dark:text-gray-300 font-medium
-                         hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                Select Multiple
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+              </div>
 
-      {/* Search and Sort */}
-      {library.length > 0 && !isSelectionMode && (
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search Bar */}
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={librarySearch}
-              onChange={(e) => setLibrarySearch(e.target.value)}
-              placeholder="Search concepts..."
-              className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                       placeholder-gray-400 dark:placeholder-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                       transition-colors"
-            />
-            <svg 
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+              {library.length === 0 ? (
+                <EmptyState
+                  icon="📚"
+                  title="No saved concepts yet"
+                  description="Save explanations to your library to review them later. Click the Save button on any explanation to add it here."
+                />
+              ) : (
+                <>
+                  {librarySearch && !isSelectionMode && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      {[...library].filter((explanation) => {
+                        const searchLower = librarySearch.toLowerCase();
+                        return (
+                          explanation.concept.toLowerCase().includes(searchLower) ||
+                          explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                          explanation.level.toLowerCase().includes(searchLower)
+                        );
+                      }).length} result{[...library].filter((explanation) => {
+                        const searchLower = librarySearch.toLowerCase();
+                        return (
+                          explanation.concept.toLowerCase().includes(searchLower) ||
+                          explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                          explanation.level.toLowerCase().includes(searchLower)
+                        );
+                      }).length !== 1 ? 's' : ''} found
+                    </p>
+                  )}
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-              Sort:
-            </label>
-            <select
-              value={librarySort}
-              onChange={(e) => setLibrarySort(e.target.value)}
-              className="px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                       text-sm font-medium cursor-pointer
-                       hover:border-purple-400 dark:hover:border-purple-500
-                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                       transition-colors"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="a-z">A → Z</option>
-              <option value="z-a">Z → A</option>
-            </select>
-          </div>
-        </div>
-      )}
-    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...library]
+                      .filter((explanation) => {
+                        if (!librarySearch) return true;
+                        const searchLower = librarySearch.toLowerCase();
+                        return (
+                          explanation.concept.toLowerCase().includes(searchLower) ||
+                          explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                          explanation.level.toLowerCase().includes(searchLower)
+                        );
+                      })
+                      .sort((a, b) => {
+                        switch (librarySort) {
+                          case 'newest':
+                            return new Date(b.timestamp) - new Date(a.timestamp);
+                          case 'oldest':
+                            return new Date(a.timestamp) - new Date(b.timestamp);
+                          case 'a-z':
+                            return a.concept.localeCompare(b.concept);
+                          case 'z-a':
+                            return b.concept.localeCompare(a.concept);
+                          default:
+                            return 0;
+                        }
+                      })
+                      .map((explanation) => (
+                        <LibraryCard
+                          key={explanation.id}
+                          explanation={explanation}
+                          isSelectionMode={isSelectionMode}
+                          isSelected={selectedCards.includes(explanation.id)}
+                          onSelect={() => {
+                            if (selectedCards.includes(explanation.id)) {
+                              setSelectedCards(selectedCards.filter(id => id !== explanation.id));
+                            } else {
+                              setSelectedCards([...selectedCards, explanation.id]);
+                            }
+                          }}
+                          onView={() => !isSelectionMode && handleViewFromLibrary(explanation)}
+                          onDelete={() => !isSelectionMode && handleDeleteFromLibrary(explanation.id)}
+                        />
+                      ))}
+                  </div>
 
-    {library.length === 0 ? (
-      <EmptyState
-        icon="📚"
-        title="No saved concepts yet"
-        description="Save explanations to your library to review them later. Click the Save button on any explanation to add it here."
-      />
-    ) : (
-      <>
-        {/* Results count */}
-        {librarySearch && !isSelectionMode && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {[...library].filter((explanation) => {
-              const searchLower = librarySearch.toLowerCase();
-              return (
-                explanation.concept.toLowerCase().includes(searchLower) ||
-                explanation.explanation.simple.toLowerCase().includes(searchLower) ||
-                explanation.level.toLowerCase().includes(searchLower)
-              );
-            }).length} result{[...library].filter((explanation) => {
-              const searchLower = librarySearch.toLowerCase();
-              return (
-                explanation.concept.toLowerCase().includes(searchLower) ||
-                explanation.explanation.simple.toLowerCase().includes(searchLower) ||
-                explanation.level.toLowerCase().includes(searchLower)
-              );
-            }).length !== 1 ? 's' : ''} found
-          </p>
-        )}
+                  {librarySearch && [...library].filter((explanation) => {
+                    const searchLower = librarySearch.toLowerCase();
+                    return (
+                      explanation.concept.toLowerCase().includes(searchLower) ||
+                      explanation.explanation.simple.toLowerCase().includes(searchLower) ||
+                      explanation.level.toLowerCase().includes(searchLower)
+                    );
+                  }).length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+                        No concepts found for "{librarySearch}"
+                      </p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm">
+                        Try a different search term
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...library]
-            .filter((explanation) => {
-              if (!librarySearch) return true;
-              const searchLower = librarySearch.toLowerCase();
-              return (
-                explanation.concept.toLowerCase().includes(searchLower) ||
-                explanation.explanation.simple.toLowerCase().includes(searchLower) ||
-                explanation.level.toLowerCase().includes(searchLower)
-              );
-            })
-            .sort((a, b) => {
-              switch (librarySort) {
-                case 'newest':
-                  return new Date(b.timestamp) - new Date(a.timestamp);
-                case 'oldest':
-                  return new Date(a.timestamp) - new Date(b.timestamp);
-                case 'a-z':
-                  return a.concept.localeCompare(b.concept);
-                case 'z-a':
-                  return b.concept.localeCompare(a.concept);
-                default:
-                  return 0;
-              }
-            })
-            .map((explanation) => (
-              <LibraryCard
-                key={explanation.id}
-                explanation={explanation}
-                isSelectionMode={isSelectionMode}
-                isSelected={selectedCards.includes(explanation.id)}
-                onSelect={() => {
-                  if (selectedCards.includes(explanation.id)) {
-                    setSelectedCards(selectedCards.filter(id => id !== explanation.id));
-                  } else {
-                    setSelectedCards([...selectedCards, explanation.id]);
-                  }
-                }}
-                onView={() => !isSelectionMode && handleViewFromLibrary(explanation)}
-                onDelete={() => !isSelectionMode && handleDeleteFromLibrary(explanation.id)}
-              />
-            ))}
-        </div>
+          {activeTab === 'progress' && (
+            <ProgressPage library={library} />
+          )}
 
-        {/* No results message */}
-        {librarySearch && [...library].filter((explanation) => {
-          const searchLower = librarySearch.toLowerCase();
-          return (
-            explanation.concept.toLowerCase().includes(searchLower) ||
-            explanation.explanation.simple.toLowerCase().includes(searchLower) ||
-            explanation.level.toLowerCase().includes(searchLower)
-          );
-        }).length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
-              No concepts found for "{librarySearch}"
-            </p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm">
-              Try a different search term
-            </p>
-          </div>
-        )}
-      </>
-    )}
-  </div>
-)}
-
-{activeTab === 'progress' && (
-  <ProgressPage library={library} />
+    {activeTab === 'explore' && (
+  <ExplorePage 
+    onExplainConcept={handleExploreExplain}
+    currentExplanation={exploreExplanation}
+    isLoading={isExploreLoading} // Changed from isLoading
+    onSave={handleSave}
+    onRelatedClick={(concept) => {
+      setInputText(concept);
+      setActiveTab('home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }}
+    onBack={() => setExploreExplanation(null)}
+  />
 )}
         </div>
       </main>
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      {/* Toast notifications */}
       {toast && (
         <Toast
           message={toast.message}
@@ -454,7 +476,6 @@ const [librarySort, setLibrarySort] = useState('newest'); // newest, oldest, a-z
         />
       )}
 
-      {/* About Modal */}
       <AboutModal 
         isOpen={showAboutModal}
         onClose={() => setShowAboutModal(false)}

@@ -1,9 +1,18 @@
 import { useState } from 'react';
-import { ChevronRight, Lightbulb } from 'lucide-react';
+import { ChevronRight, Lightbulb, ArrowLeft } from 'lucide-react';
 import { exploreCategories } from '../data/exploreConcepts';
 import LevelSelector from './LevelSelector';
+import LoadingState from './LoadingState';
+import ExplanationCard from './ExplanationCard';
 
-const ExplorePage = ({ onExplainConcept }) => {
+const ExplorePage = ({ 
+  onExplainConcept, 
+  currentExplanation, 
+  isLoading, 
+  onSave, 
+  onRelatedClick,
+  onBack 
+}) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedConcept, setSelectedConcept] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState('elementary');
@@ -15,10 +24,13 @@ const ExplorePage = ({ onExplainConcept }) => {
   const handleExplain = () => {
     if (selectedConcept) {
       onExplainConcept(selectedConcept, selectedLevel);
-      // Reset
-      setSelectedConcept(null);
-      setSelectedCategory(null);
     }
+  };
+
+  const handleBackToCategories = () => {
+    setSelectedConcept(null);
+    setSelectedCategory(null);
+    onBack();
   };
 
   const getCategoryColorClasses = (color) => {
@@ -32,6 +44,36 @@ const ExplorePage = ({ onExplainConcept }) => {
     };
     return colors[color] || colors.purple;
   };
+
+  // Show explanation if it exists
+  if (currentExplanation && !isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+        <button
+          onClick={handleBackToCategories}
+          className="mb-6 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Explore
+        </button>
+
+        <ExplanationCard
+          explanation={currentExplanation}
+          onSave={onSave}
+          onRelatedClick={onRelatedClick}
+        />
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+        <LoadingState />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 pb-24">
@@ -150,7 +192,7 @@ const ExplorePage = ({ onExplainConcept }) => {
                        flex items-center justify-center gap-2"
             >
               <Lightbulb className="w-5 h-5" />
-              Explain {selectedConcept}
+              Explain This
             </button>
           </div>
         </div>
